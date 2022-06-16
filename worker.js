@@ -78,6 +78,7 @@ const EquationRenderWorker = () => {
                 break;
             case "equation":
                 equation = new Equation(data.data);
+                console.log(equation, equation.origin);
                 render();
                 break;
             case "resize":
