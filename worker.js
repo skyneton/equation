@@ -8,8 +8,8 @@ const EquationRenderWorker = () => {
     function render() {
         canvasClear();
         drawZeroGrid();
-        drawGraph()
         if(!equation) return;
+        drawGraph();
     }
 
     function canvasClear() {

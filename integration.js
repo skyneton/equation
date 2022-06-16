@@ -9,7 +9,6 @@ const Integration = new class {
 
     #resizeEvent() {
         window.addEventListener("resize", _ => {
-            console.log(window.innerWidth, window.innerHeight);
             this.#worker.postMessage({
                 "type": "resize",
                 "data": [window.innerWidth, window.innerHeight]
