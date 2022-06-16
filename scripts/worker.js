@@ -138,15 +138,20 @@ const EquationRenderWorker = () => {
 
         ctx.beginPath();
         let isMoved = false;
+        let before = 0;
         for(let x = -dw; x <= dw; x++) {
             const posX = x / zoom + currentX;
             let posY = (equation.calc(posX) + currentY) * zoom;
-            // let posY = (Math.E ** (posX) + currentY) * zoom;
+            // let posY = (Math.tan(posX) + currentY) * zoom;
             if(isNaN(posY)) {
                 isMoved = false;
                 continue;
             }
             posY = clamp(posY, -dh - 1, dh + 1);
+            if(Math.abs(posY) == dh + 1 && Math.abs(before) == dh + 1) {
+                if(posY < 0 && before > 0 || posY > 0 && before < 0) isMoved = false;
+            }
+            before = posY;
 
             if(!isMoved) {
                 isMoved = true;

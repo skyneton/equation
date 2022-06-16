@@ -52,10 +52,11 @@ const Integration = new class {
             sendCanvasInfo();
         });
 
-        let touch = {x:0, y:0, distance: 0};
+        let touch = {x:0, y:0, distance: 0, id: 0};
         canvas.addEventListener("touchstart", e => {
             touch.x = e.touches[0].pageX;
             touch.y = e.touches[0].pageY;
+            touch.id = e.touches[0].identifier;
         });
         canvas.addEventListener("touchmove", e => {
             e.preventDefault();
@@ -69,10 +70,14 @@ const Integration = new class {
                         : 0;
                 touch.distance = distance;
                 zoom = this.#clamp(zoom + wheel * zoom * .03, 1e-10, 1e+10);
-                touch.x = e.touches[0].pageX;
-                touch.y = e.touches[0].pageY;
                 sendCanvasInfo();
                 return;
+            }
+
+            if(touch.id != e.touches[0].identifier) {
+                touch.x = e.touches[0].pageX;
+                touch.y = e.touches[0].pageY;
+                touch.id = e.touches[0].identifier;
             }
 
             const movementX = e.touches[0].pageX - touch.x;
