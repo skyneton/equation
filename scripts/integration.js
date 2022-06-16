@@ -69,7 +69,7 @@ const Integration = new class {
                         ? -1
                         : 0;
                 touch.distance = distance;
-                zoom = this.#clamp(zoom + wheel * zoom * .03, 1e-10, 1e+10);
+                zoom = this.#clamp(zoom + wheel * zoom * .05, 1e-10, 1e+10);
                 sendCanvasInfo();
                 return;
             }
