@@ -1,0 +1,25 @@
+.canvas {
+    position: fixed;
+}
+
+.panel {
+    z-index: 999;
+    display: flex;
+    position: fixed;
+    left: 0;
+    bottom: 0;
+    right: 0;
+    padding: 20px;
+    justify-content: space-around;
+}
+.panel > input {
+    height: 25px;
+}
+
+.equation {
+    width: 260px;
+}
+
+.x_value {
+    width: 80px;
+}
