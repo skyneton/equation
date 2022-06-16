@@ -52,18 +52,29 @@ const Integration = new class {
             sendCanvasInfo();
         });
 
-        let touch = {x:0, y:0};
+        let touch = {x:0, y:0, distance: 0};
         canvas.addEventListener("touchstart", e => {
             touch.x = e.touches[0].pageX;
             touch.y = e.touches[0].pageY;
         });
         canvas.addEventListener("touchmove", e => {
+            e.preventDefault();
             const movementX = e.touches[0].pageX - touch.x;
             const movementY = e.touches[0].pageY - touch.y;
             touch.x = e.touches[0].pageX;
             touch.y = e.touches[0].pageY;
             x -= movementX / zoom;
             y -= movementY / zoom;
+            sendCanvasInfo();
+            if(e.touches.length != 2) return;
+            const distance = Math.pow((e.touches[0].pageX - e.touches[1].pageX), 2) + Math.pow((e.touches[0].pageY - e.touches[1].pageY), 2);
+            const wheel = touch.distance < distance
+                ? 1
+                : touch.distance > distance
+                    ? -1
+                    : 0;
+            touch.distance = distance;
+            zoom = this.#clamp(zoom + wheel * zoom * .08, 1e-10, 1e+10);
             sendCanvasInfo();
         })
     }
