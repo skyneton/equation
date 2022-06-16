@@ -5,6 +5,8 @@ const EquationRenderWorker = () => {
     let equation;
     let width, height;
 
+    const PixelPerPointInfo = 100;
+
     function render() {
         canvasClear();
         drawZeroGrid();
@@ -16,22 +18,115 @@ const EquationRenderWorker = () => {
         ctx.clearRect(-width >> 1, -height >> 1, width, height);
     }
 
+    function pointTo(point) {
+        if(point < 1) return 1;
+        if(point < 5) return point;
+        if(point < 10) return 5;
+        if(point < 100) return Math.floor(point / 10) * 10;
+        if(point < 1000) return Math.floor(point / 100) * 100;
+        return Math.floor(point / 1000) * 1000;
+    }
+
+    function pointStart(v, point) {
+        v = Math.floor(v);
+        return v - v % point;
+    }
+
+    function clamp(value, min, max) {
+        return Math.min(Math.max(value, min), max);
+    }
+
     function drawZeroGrid() {
-        const originStyle = ctx.strokeStyle;
-        ctx.strokeStyle = "rgba(0, 0, 0, 0.7)";
+        const originStyle = ctx.strokeStyle, originWidth = ctx.lineWidth;
+
+        const dw = width >> 1;
+        const dh = height >> 1;
+        const point = pointTo(Math.floor(PixelPerPointInfo / zoom));
+        const pixelPerPoint = zoom * point;
+
+
+        const startX = pointStart(-dw / zoom + currentX, point);
+        const startPixelX = (startX - currentX) * zoom;
+        let pointX = startX;
+        const drawY = clamp(-currentY * zoom + 12, -dh + 9, dh - 11);
+
+        ctx.font = '13px serif';
+        for(let x = startPixelX; x < dw; x += pixelPerPoint) {
+            ctx.beginPath();
+            ctx.strokeStyle = "black";
+            ctx.strokeText(pointX, x + 1, drawY);
+            ctx.stroke();
+            pointX += point;
+
+            ctx.beginPath();
+            ctx.strokeStyle = "rgba(0, 0, 0, 0.7)";
+            ctx.moveTo(x, dh);
+            ctx.lineTo(x, -dh);
+            ctx.stroke();
+
+            const div4 = pixelPerPoint / 5;
+            ctx.beginPath();
+            ctx.strokeStyle = "rgba(0, 0, 0, 0.1)";
+            for(let i = x + div4, check = x + pixelPerPoint; i < check; i += div4) {
+                ctx.moveTo(i, dh);
+                ctx.lineTo(i, -dh);
+            }
+            ctx.stroke();
+        }
+
+        const originAlign = ctx.textAlign;
+        const startY = pointStart(-dh / zoom + currentY, point);
+        const startPixelY = (startY - currentY) * zoom;
+        let pointY = startY;
+        const drawX = clamp(-currentX * zoom + 9, -dw + 9, dw - 15);
+        if(drawX > dw - 20) ctx.textAlign = "right";
+        for(let y = startPixelY; y < dh; y += pixelPerPoint) {
+            ctx.beginPath();
+            ctx.strokeStyle = "black";
+            ctx.strokeText(pointY, drawX - 8, y + 12);
+            ctx.stroke();
+            pointY += point;
+
+            ctx.beginPath();
+            ctx.strokeStyle = "rgba(0, 0, 0, 0.7)";
+            ctx.moveTo(dw, y);
+            ctx.lineTo(-dw, y);
+            ctx.stroke();
+
+            const div4 = pixelPerPoint / 5;
+            ctx.beginPath();
+            ctx.strokeStyle = "rgba(0, 0, 0, 0.1)";
+            for(let i = y + div4, check = y + pixelPerPoint; i < check; i += div4) {
+                ctx.moveTo(dw, i);
+                ctx.lineTo(-dw, i);
+            }
+            ctx.stroke();
+        }
+        ctx.textAlign = originAlign;
+
+        // ctx.beginPath();
+        // ctx.moveTo(0, -pixelPerPoint);
+        // ctx.lineTo(0, 0);
+        // ctx.moveTo(startPixelX, 0);
+        // ctx.lineTo(0, 0);
+        // ctx.stroke();
 
         ctx.beginPath();
-        ctx.moveTo(-currentX * zoom, -height >> 1);
-        ctx.lineTo(-currentX * zoom, height >> 1);
-        
-        ctx.moveTo(-width >> 1, -currentY * zoom);
-        ctx.lineTo(width >> 1, -currentY * zoom);
+        ctx.strokeStyle = "black";
+        ctx.lineWidth = 2;
 
-        ctx.setLineDash([3, 3]);
+        ctx.moveTo(-currentX * zoom, -dh);
+        ctx.lineTo(-currentX * zoom, dh);
+        
+        ctx.moveTo(-dw, -currentY * zoom);
+        ctx.lineTo(dw, -currentY * zoom);
+
+        // ctx.setLineDash([3, 3]);
         ctx.stroke();
 
-        ctx.setLineDash([]);
+        // ctx.setLineDash([]);
         ctx.strokeStyle = originStyle;
+        ctx.lineWidth = originWidth;
     }
 
     function drawGraph() {
@@ -39,14 +134,15 @@ const EquationRenderWorker = () => {
         ctx.strokeStyle = "red";
 
         const dw = width >> 1;
-        // const dh = height >> 1;
+        const dh = height >> 1;
 
         ctx.beginPath();
         let isMoved = false;
         for(let x = -dw; x <= dw; x++) {
             const posX = x / zoom + currentX;
-            const posY = -(equation.calc(posX) * zoom - currentY);
-            //const posY = (Math.sin(posX) + currentY) * zoom;
+            const posY = (equation.calc(posX) + currentY) * zoom;
+            // let posY = (Math.E ** (posX) + currentY) * zoom;
+            posY = Math.max(-dh - 1, Math.min(dh + 1, posY));
             if(isNaN(posY)) {
                 isMoved = false;
                 continue;
@@ -79,7 +175,6 @@ const EquationRenderWorker = () => {
                 break;
             case "equation":
                 equation = new Equation(data.data);
-                console.log(equation, equation.origin);
                 render();
                 break;
             case "resize":
