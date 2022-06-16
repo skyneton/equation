@@ -140,13 +140,13 @@ const EquationRenderWorker = () => {
         let isMoved = false;
         for(let x = -dw; x <= dw; x++) {
             const posX = x / zoom + currentX;
-            const posY = (equation.calc(posX) + currentY) * zoom;
+            let posY = (equation.calc(posX) + currentY) * zoom;
             // let posY = (Math.E ** (posX) + currentY) * zoom;
-            posY = Math.max(-dh - 1, Math.min(dh + 1, posY));
             if(isNaN(posY)) {
                 isMoved = false;
                 continue;
             }
+            posY = clamp(posY, -dh - 1, dh + 1);
 
             if(!isMoved) {
                 isMoved = true;
