@@ -52,7 +52,7 @@ const Integration = new class {
             sendCanvasInfo();
         });
 
-        let touch = {x:0, y:0, distance: 0, id: 0};
+        let touch = {x:0, y:0, distance: 0, id: -1, dist_id: [-1, -1]};
         canvas.addEventListener("touchstart", e => {
             touch.x = e.touches[0].pageX;
             touch.y = e.touches[0].pageY;
@@ -62,11 +62,17 @@ const Integration = new class {
             e.preventDefault();
 
             if(e.touches.length == 2) {
-                const distance = Math.pow((e.touches[0].pageX - e.touches[1].pageX), 2) + Math.pow((e.touches[0].pageY - e.touches[1].pageY), 2);
-                const wheel = (Math.sqrt(touch.distance) - Math.sqrt(distance)) / 40;
+                const distance = Math.sqrt(Math.pow((e.touches[0].pageX - e.touches[1].pageX), 2) + Math.pow((e.touches[0].pageY - e.touches[1].pageY), 2));
+                const wheel = (distance - touch.distance) / 40;
                 touch.distance = distance;
-                zoom = this.#clamp(zoom + wheel * zoom * .05, 1e-10, 1e+10);
-                sendCanvasInfo();
+                const id1 = e.touches[0].identifier, id2 = e.touches[1].identifier;
+                    if(touch.dist_id[0] == id1 && touch.dist_id[1] == id2) {
+                    zoom = this.#clamp(zoom + wheel * zoom * .05, 1e-10, 1e+10);
+                    sendCanvasInfo();
+                }else {
+                    touch.dist_id[0] = id1;
+                    touch.dist_id[1] = id2;
+                }
                 return;
             }
 
