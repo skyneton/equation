@@ -91,7 +91,7 @@ const EquationRenderWorker = () => {
         for(let y = startPixelY; y < dh; y += pixelPerPoint) {
             ctx.beginPath();
             ctx.strokeStyle = "black";
-            ctx.strokeText(parseFloat(-pointY).toFixed(4)), drawX - 8, y + 12);
+            ctx.strokeText((-pointY).toFixed(4), drawX - 8, y + 12);
             ctx.stroke();
             pointY += point;
 
