@@ -63,11 +63,7 @@ const Integration = new class {
 
             if(e.touches.length == 2) {
                 const distance = Math.pow((e.touches[0].pageX - e.touches[1].pageX), 2) + Math.pow((e.touches[0].pageY - e.touches[1].pageY), 2);
-                const wheel = touch.distance < distance
-                    ? 1
-                    : touch.distance > distance
-                        ? -1
-                        : 0;
+                const wheel = (Math.sqrt(touch.distance) - Math.sqrt(distance)) / 40;
                 touch.distance = distance;
                 zoom = this.#clamp(zoom + wheel * zoom * .05, 1e-10, 1e+10);
                 sendCanvasInfo();
