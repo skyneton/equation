@@ -21,7 +21,7 @@ const EquationRenderWorker = () => {
     function pointTo(point) {
         if(point < 1) {
             point = clamp(point, 0.001, 1);
-            let calc = 1000
+            let calc = 1000;
             if(point < 0.01) calc = 1000;
             else if(point < 0.1) calc = 100;
             else if(point < 1) calc = 10;
@@ -62,7 +62,7 @@ const EquationRenderWorker = () => {
         for(let x = startPixelX; x < dw; x += pixelPerPoint) {
             ctx.beginPath();
             ctx.strokeStyle = "black";
-            ctx.strokeText(pointX, x + 1, drawY);
+            ctx.strokeText(parseFloat(pointX.toFixed(4)), x + 1, drawY);
             ctx.stroke();
             pointX += point;
 
@@ -91,7 +91,7 @@ const EquationRenderWorker = () => {
         for(let y = startPixelY; y < dh; y += pixelPerPoint) {
             ctx.beginPath();
             ctx.strokeStyle = "black";
-            ctx.strokeText(pointY, drawX - 8, y + 12);
+            ctx.strokeText(parseFloat(pointY.toFixed(4)), drawX - 8, y + 12);
             ctx.stroke();
             pointY += point;
 
