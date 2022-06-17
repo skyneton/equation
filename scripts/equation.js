@@ -1,17 +1,15 @@
 class Equation {
     #origin;
     #buffer = [];
-    #operator = [];
     #equationTable = {};
     
     /**
      * @param {string} str 
      */
     constructor(str = "") {
-        this.#origin = str.replaceAll(" ", "");
+        this.#origin = str.replaceAll(" ", "").toLowerCase();
         const result = this.#parse();
-        this.#buffer = result[0];
-        this.#operator = result[1];
+        this.#buffer = result;
     }
     
     /**
@@ -31,16 +29,20 @@ class Equation {
         return 0;
     }
     
-    #parsePow(data) {
+    #parseArray(data = {}, res = undefined, oper = undefined) {
         let isNumber = true;
         let key = "";
 
-        const resultOperator = [];
-        const resultValues = [];
+        const result = [];
         const operator = [];
-        const values = [];
-
-        const getLastOperator = (n = 1) => operator.length <= n - 1 ? "" : operator[operator.length - n];
+        
+        let index = 0;
+        if(res) {
+            result[index] = res;
+            operator[index] = oper;
+            index++;
+        }
+        const getLastOperator = (n = 1) => operator[index].length <= n - 1 ? "" : operator[index][operator[index].length - n];
         
         const lastOperatorLevel = (n = 1) => {
             const op = getLastOperator(n);
@@ -52,48 +54,53 @@ class Equation {
             if(!isNumber || isNaN(value)) return value;
             return parseFloat(value);
         }
+        
         const valuePush = (value = key) => {
-            if(value != "") values.push(typeParse());
+            result[index] ??= [];
+            if(value != "") result[index].push(typeParse());
 
             isNumber = true;
             key = "";
         }
-
+        
         const operatorPush = op => {
+            operator[index] ??= [];
             if(lastOperatorLevel() == 0)
-                return operator.push(op);
+                return operator[index].push(op);
 
             const currentLevel = this.#getOperatorLevel(op);
             if(lastOperatorLevel() <= currentLevel)
-                return operator.push(op);
-
-            while(operator.length > 0) {
-                if(lastOperatorLevel() <= currentLevel) break;
-                resultOperator.push(operator.pop());
-                resultValues.push(values.pop());
+                return operator[index].push(op);
+                
+            while(operator[index].length > 0) {
+                if(lastOperatorLevel() < currentLevel) break;
+                result[index].push(operator[index].pop());
             }
-            resultValues.push(values.pop());
-            operator.push(op);
+            operator[index].push(op);
         }
 
-        if(!("index" in data))
-            data["index"] = -1;
         const length = this.#origin.length;
         A: for(++data["index"]; data["index"] < length; data["index"]++) {
-            const index = data["index"];
-            const c = this.#origin[index];
+            const i = data["index"];
+            const c = this.#origin[i];
             switch(c) {
                 case '(':
-                    key = [key == "" ? undefined : typeParse(key), this.#parse(data)];
+                    key = [1, key == "" ? undefined : typeParse(key), this.#parse(data)];
                     continue;
-                case ')': continue;
-                case '*': case '/':
+                case ')': break A;
+                case '%': case '^': case '*': case '/':
                     valuePush();
                     operatorPush(c);
                     continue;
-                case "^": case "+": case "-":
-                    data["index"]--;
-                    break A;
+                case "+": case "-":
+                    if(key == "") break;
+                    valuePush();
+                    operatorPush(c);
+                    continue;
+                case ',':
+                    valuePush();
+                    index++;
+                    continue;
             }
             if(Array.isArray(key)) {
                 key[0] ??= "";
@@ -105,14 +112,16 @@ class Equation {
         }
 
         valuePush();
-
-        while(operator.length > 0) {
-            resultOperator.push(operator.pop());
-            resultValues.push(values.pop());
+        
+        for(let i = 0; i <= index; i++) {
+          result[i] ??= [];
+          operator[i] ??= [];
+          while(operator[i].length > 0) {
+              result[i].push(operator[i].pop());
+          }
         }
-        resultValues.push(values.pop());
 
-        return [resultValues, resultOperator];
+        return result;
     }
 
     #parse(data = {}) {
@@ -120,10 +129,8 @@ class Equation {
         let key = "";
         let pass = false;
 
-        const resultOperator = [];
-        const resultValues = [];
+        const result = [];
         const operator = [];
-        const values = [];
 
         const getLastOperator = (n = 1) => operator.length <= n - 1 ? "" : operator[operator.length - n];
         
@@ -139,7 +146,7 @@ class Equation {
         }
         
         const valuePush = (value = key) => {
-            if(value != "") values.push(typeParse());
+            if(value != "") result.push(typeParse());
 
             isNumber = true;
             key = "";
@@ -151,15 +158,15 @@ class Equation {
                 return operator.push(op);
 
             const currentLevel = this.#getOperatorLevel(op);
-            if(lastOperatorLevel() <= currentLevel)
+            if(lastOperatorLevel() < currentLevel)
                 return operator.push(op);
 
             while(operator.length > 0) {
-                if(lastOperatorLevel() <= currentLevel) break;
-                resultOperator.push(operator.pop());
-                resultValues.push(values.pop());
+                if(lastOperatorLevel() < currentLevel) break;
+                result.push(operator.pop());
+                //resultValues.push(values.pop());
             }
-            resultValues.push(values.pop());
+            //resultValues.push(values.pop());
             operator.push(op);
         }
 
@@ -171,14 +178,14 @@ class Equation {
             const c = this.#origin[index];
             switch(c) {
                 case '(':
-                    key = [key == "" ? undefined : typeParse(key), this.#parse(data)];
+                    key = [1, key == "" ? undefined : typeParse(key), this.#parse(data)];
                     continue;
                 case ')':
                     break A;
-                case "^":
-                    key = [1, typeParse(key), this.#parsePow(data)];
-                    continue;
-                case '*': case '/':
+                case ',':
+                    valuePush();
+                    return [2, ...this.#parseArray(data, result, operator)];
+                case '^': case '%': case '*': case '/':
                     valuePush();
                     operatorPush(c);
                     continue;
@@ -196,16 +203,16 @@ class Equation {
             if(!(c >= '0' && c <= '9'  || (c == "." || c == "+" || c == "-")))
                 isNumber = false;
         }
-
+        
         valuePush();
 
         while(operator.length > 0) {
-            resultOperator.push(operator.pop());
-            resultValues.push(values.pop());
+            result.push(operator.pop());
+            //resultValues.push(values.pop());
         }
-        resultValues.push(values.pop());
+        //resultValues.push(values.pop());
 
-        return [resultValues, resultOperator];
+        return result;
     }
     
     #removeFirstStr(str) {
@@ -216,44 +223,34 @@ class Equation {
         return str.substr(0, str.length - 1);
     }
     
-    #calcLoop(funcCall, x) {
-        if(!Array.isArray(funcCall)) return funcCall;
-        if(funcCall.length == 3) {
-            //□^□  format
-            const a = Array.isArray(funcCall[1])
-                ? this.calc(x, funcCall[1][0], funcCall[1][1])
-                : this.#inputCheck(funcCall[1], x);
-            const b = Array.isArray(funcCall[2])
-                ? this.calc(x, funcCall[2][0], funcCall[2][1])
-                : this.#inputCheck(funcCall[2], x);
-            return Math.pow(a, b);
-        }
-        const result = this.calc(x, funcCall[1][0], funcCall[1][1]);
-        if(funcCall[0] == undefined)
-            return result;
-        if(typeof funcCall[0] != "string") return funcCall[0] * result;
-        const direction = funcCall[0].startsWith("-") ? -1 : 1;
-        if(funcCall[0][0] == "-" || funcCall[0][0] == "+")
-            funcCall[0] = this.#removeFirstStr(funcCall[0]);
-        
-        return direction * this.#special(funcCall[0], result, x);
-    }
-    
-    #inputCheck(data, x) {
-        if(typeof data == "number") return data;
+    #normalize(data, x) {
+        if(!isNaN(data)) return parseFloat(data);
         const direction = data.startsWith("-") ? -1 : 1;
-        if(["-","+"].includes(data[0]))
-            data = this.#removeFirstStr(data);
+        if(data[0] == '-' || data[0] == '+') data = data.substr(1);
         
-        data = data.toLowerCase();
         if(data.endsWith("x")) {
-            data = this.#removeLastStr(data);
-            const multi = x;
-            if(data == "") return direction * multi;
-            return direction * this.#special(data, multi, x);
+            data = data.substr(0, data.length - 1);
+            if(data == "") return direction * x;
+            return direction * this.#special(data, x, x);
         }
         
         return direction * this.#special(data, 1, x);
+    }
+    
+    cot(x) {
+        return 1 / Math.tan(x);
+    }
+    
+    csc(x) {
+        return 1 / Math.sin(x);
+    }
+    
+    sec(x) {
+        return 1 / Math.cos(x);
+    }
+    
+    mod(x, y) {
+        return x % y;
     }
     
     #valueSpecial(data) {
@@ -261,68 +258,97 @@ class Equation {
             case "e": return Math.E;
             case "pi": return Math.PI;
             case "ln": return Math.log;
+            case "cot": return this.cot;
+            case "csc": return this.csc;
+            case "sec": return this.sec;
+            case "mod": return this.mod;
         }
         
         if(!data.startsWith("log")) return undefined;
         data = data.substr(3);
-        const low = this.#inputCheck(data);
+        const low = this.#normalize(data);
         return data => Math.log(data) / Math.log(low);
     }
     
     #special(data, value = 1, x = 0) {
-        data = data.toLowerCase();
+        if(typeof value != "object") value = [value];
         if(Math.hasOwnProperty(data)) {
-            if(typeof value != "object") value = [value];
             return Math[data].apply(this, value);
         }
         if(data in this.#equationTable) {
             return this.#equationTable[data].calc(value);
         }
-        if(Array.isArray(value)) value = value[0];
         const result = this.#valueSpecial(data);
         if(result != undefined) {
             if(typeof result == "function")
-              return result.apply(this, [value]);
-            return  result * value;
+              return result.apply(this, value);
+            return  result * value[0];
         }
+        if(Array.isArray(value)) value = value[0];
         
         if(data.endsWith("x")) {
-            data = this.#removeLastStr(data);
+            data = data.substr(0, data.length- 1);
             if(data == "") return x * value;
             return this.#special(data, x * value, x);
         }
-        return parseFloat(data);
+        return parseFloat(data) * value;
     }
 
     /**
      * @param {number} x 
      */
-    calc(x, buffer = this.#buffer, operator = this.#operator) {
-        if(this.#origin == "") return NaN;
-        if(buffer.lenth == 1) {
-          return this.#inputCheck(this.#calcLoop(buffer[0], x), x);
-        }
-        
-        let num2 = this.#inputCheck(this.#calcLoop(buffer[0], x), x);
-        
-        for(let i = 0; i < operator.length; i++) {
-            let num1 = this.#inputCheck(this.#calcLoop(buffer[i + 1], x), x);
-            switch(operator[i]) {
-                case "/":
-                    num2 = num1 / num2;
+    calc(x, buffer = this.#buffer) {
+        const result = [];
+        let a, b;
+        for(const data of buffer) {
+            switch(data) {
+                case '+':
+                    result.push(result.pop() + result.pop());
                     break;
-                case "*":
-                    num2 = num1 * num2;
+                case '-':
+                    b = result.pop(), a = result.pop();
+                    result.push(a - b);
                     break;
-                case "+":
-                    num2 = num1 + num2;
+                case '*':
+                    result.push(result.pop() * result.pop());
                     break;
-                case "-":
-                    num2 = num1 - num2;
+                case '/':
+                    b = result.pop(), a = result.pop();
+                    result.push(a / b);
                     break;
+                case '%':
+                    b = result.pop(), a = result.pop();
+                    result.push(a % b);
+                    break;
+                case '^':
+                    b = result.pop(), a = result.pop();
+                    result.push(Math.pow(a, b));
+                    break;
+                default:
+                    result.push(this.#calc(data, x));
             }
         }
-        return num2;
+        return result.length == 0 ? NaN : result[0];
+    }
+    
+    #calc(data, x) {
+        if(typeof data == "string") return this.#normalize(data, x);
+        if(typeof data == "number") return data;
+        if(!Array.isArray(data)) return NaN;
+        //console.log(data);
+        switch(data[0]) {
+            case 1:
+                const calc = this.calc(x, [data[2]]);
+                if(data[1] == undefined) return calc;
+                const direction = data[1].startsWith('-') ? -1 : 1;
+                if(data[1][0] == '-' || data[1][0] == '+') data[1] = data[1].substr(1);
+                return direction * this.#special(data[1], calc, x);
+            case 2:
+                const arr = [];
+                for(let i = 1; i < data.length; i++) arr.push(this.calc(x, data[i]));
+                return arr;
+        }
+        return NaN;
     }
     
     get origin() {
