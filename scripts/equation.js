@@ -178,13 +178,13 @@ class Equation {
             const c = this.#origin[index];
             switch(c) {
                 case '(':
-                    key = [1, key == "" ? undefined : typeParse(key), this.#parse(data)];
+                    key = [1, key == "" ? undefined : typeParse(key), ...this.#parse(data)];
                     continue;
                 case ')':
                     break A;
                 case ',':
                     valuePush();
-                    return [2, ...this.#parseArray(data, result, operator)];
+                    return [[2, ...this.#parseArray(data, result, operator)]];
                 case '^': case '%': case '*': case '/':
                     valuePush();
                     operatorPush(c);
@@ -253,7 +253,7 @@ class Equation {
         return x % y;
     }
     
-    #valueSpecial(data) {
+    #valueSpecial(data, x) {
         switch(data) {
             case "e": return Math.E;
             case "pi": return Math.PI;
@@ -266,8 +266,8 @@ class Equation {
         
         if(!data.startsWith("log")) return undefined;
         data = data.substr(3);
-        const low = this.#normalize(data);
-        return data => Math.log(data) / Math.log(low);
+        const low = isNaN(data) ? this.#normalize(data, x) : parseFloat(data);
+        return a => Math.log(a) / Math.log(low);
     }
     
     #special(data, value = 1, x = 0) {
@@ -278,10 +278,9 @@ class Equation {
         if(data in this.#equationTable) {
             return this.#equationTable[data].calc(value);
         }
-        const result = this.#valueSpecial(data);
+        const result = this.#valueSpecial(data, x);
         if(result != undefined) {
-            if(typeof result == "function")
-              return result.apply(this, value);
+            if(typeof result == "function") return result.apply(this, value);
             return  result * value[0];
         }
         if(Array.isArray(value)) value = value[0];
@@ -335,16 +334,16 @@ class Equation {
         if(typeof data == "string") return this.#normalize(data, x);
         if(typeof data == "number") return data;
         if(!Array.isArray(data)) return NaN;
-        //console.log(data);
+        const arr = [];
         switch(data[0]) {
             case 1:
-                const calc = this.calc(x, [data[2]]);
+                for(let i = 2; i < data.length; i++) arr.push(data[i]);
+                const calc = this.calc(x, arr);
                 if(data[1] == undefined) return calc;
                 const direction = data[1].startsWith('-') ? -1 : 1;
                 if(data[1][0] == '-' || data[1][0] == '+') data[1] = data[1].substr(1);
                 return direction * this.#special(data[1], calc, x);
             case 2:
-                const arr = [];
                 for(let i = 1; i < data.length; i++) arr.push(this.calc(x, data[i]));
                 return arr;
         }
