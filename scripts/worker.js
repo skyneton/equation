@@ -19,7 +19,15 @@ const EquationRenderWorker = () => {
     }
 
     function pointTo(point) {
-        if(point < 1) return 1;
+        if(point < 1) {
+            point = clamp(point, 0.001, 1);
+            let calc = 1000
+            if(point < 0.01) calc = 1000;
+            else if(point < 0.1) calc = 100;
+            else if(point < 1) calc = 10;
+            return Math.floor(point * calc) / calc;
+        }
+        point = Math.floor(point);
         if(point < 5) return point;
         if(point < 10) return 5;
         if(point < 100) return Math.floor(point / 10) * 10;
@@ -41,7 +49,7 @@ const EquationRenderWorker = () => {
 
         const dw = width >> 1;
         const dh = height >> 1;
-        const point = pointTo(Math.floor(PixelPerPointInfo / zoom));
+        const point = pointTo(PixelPerPointInfo / zoom);
         const pixelPerPoint = zoom * point;
 
 
