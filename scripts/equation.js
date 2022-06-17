@@ -341,8 +341,9 @@ class Equation {
                 const calc = this.calc(x, arr);
                 if(data[1] == undefined) return calc;
                 const direction = data[1].startsWith('-') ? -1 : 1;
-                if(data[1][0] == '-' || data[1][0] == '+') data[1] = data[1].substr(1);
-                return direction * this.#special(data[1], calc, x);
+                let func = data[1];
+                if(data[1][0] == '-' || data[1][0] == '+') func = func.substr(1);
+                return direction * this.#special(func, calc, x);
             case 2:
                 for(let i = 1; i < data.length; i++) arr.push(this.calc(x, data[i]));
                 return arr;
