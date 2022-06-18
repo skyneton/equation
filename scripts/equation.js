@@ -22,9 +22,10 @@ class Equation {
     
     #getOperatorLevel(operator) {
         switch(operator) {
-            case "-": case "+": return 1;
-            case "*": case "/": return 2;
-            case "^": return 3;
+            case ">": case "<": return 1
+            case "-": case "+": return 2;
+            case "*": case "/": return 3;
+            case "^": return 4;
         }
         return 0;
     }
@@ -88,7 +89,7 @@ class Equation {
                     key = [1, key == "" ? undefined : typeParse(key), this.#parse(data)];
                     continue;
                 case ')': break A;
-                case '%': case '^': case '*': case '/':
+                case '>': case '<': case '%': case '^': case '*': case '/':
                     valuePush();
                     operatorPush(c);
                     continue;
@@ -185,7 +186,7 @@ class Equation {
                 case ',':
                     valuePush();
                     return [[2, ...this.#parseArray(data, result, operator)]];
-                case '^': case '%': case '*': case '/':
+                case '>': case '<': case '^': case '%': case '*': case '/':
                     valuePush();
                     operatorPush(c);
                     continue;
@@ -323,6 +324,14 @@ class Equation {
                     b = result.pop(), a = result.pop();
                     result.push(Math.pow(a, b));
                     break;
+                case '>':
+                    b = result.pop(), a = result.pop();
+                    result.push(a > b);
+                    break;
+                case '<':
+                    b = result.pop(), a = result.pop();
+                    result.push(a < b);
+                    break;
                 default:
                     result.push(this.#calc(data, x));
             }
@@ -340,9 +349,11 @@ class Equation {
                 for(let i = 2; i < data.length; i++) arr.push(data[i]);
                 const calc = this.calc(x, arr);
                 if(data[1] == undefined) return calc;
-                const direction = data[1].startsWith('-') ? -1 : 1;
+                if(Array.isArray(data[1])) return this.calc(x, [data[1]]) * calc;
+
+                const direction = data[1][0] == '-' ? -1 : 1;
                 let func = data[1];
-                if(data[1][0] == '-' || data[1][0] == '+') func = func.substr(1);
+                if(data[1][0] == '-' || data[1][0] == '+') func =  func.substr(1);
                 return direction * this.#special(func, calc, x);
             case 2:
                 for(let i = 1; i < data.length; i++) arr.push(this.calc(x, data[i]));
