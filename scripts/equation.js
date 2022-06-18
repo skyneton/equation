@@ -94,7 +94,7 @@ class Equation {
                     operatorPush(c);
                     continue;
                 case "+": case "-":
-                    if(key == "") break;
+                    if(key == "") key = "0";
                     valuePush();
                     operatorPush(c);
                     continue;
@@ -191,7 +191,7 @@ class Equation {
                     operatorPush(c);
                     continue;
                 case "+": case "-":
-                    if(key == "") break;
+                    if(key == "") key = "0";
                     valuePush();
                     operatorPush(c);
                     continue;
@@ -201,7 +201,7 @@ class Equation {
                 key[0] += c;
             }else
                 key += c;
-            if(!(c >= '0' && c <= '9'  || (c == "." || c == "+" || c == "-")))
+            if(!(c >= '0' && c <= '9'  || (c == ".")))
                 isNumber = false;
         }
         
@@ -353,7 +353,8 @@ class Equation {
 
                 const direction = data[1][0] == '-' ? -1 : 1;
                 let func = data[1];
-                if(data[1][0] == '-' || data[1][0] == '+') func =  func.substr(1);
+                if(func[0] == '-' || func[0] == '+') func =  func.substr(1);
+                if(func == "") return direction * calc;
                 return direction * this.#special(func, calc, x);
             case 2:
                 for(let i = 1; i < data.length; i++) arr.push(this.calc(x, data[i]));
