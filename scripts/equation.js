@@ -11,6 +11,10 @@ class Equation {
         const result = this.#parse();
         this.#buffer = result;
     }
+
+    get buffer() {
+        return this.#buffer;
+    }
     
     /**
      * @param {object} equationTable
