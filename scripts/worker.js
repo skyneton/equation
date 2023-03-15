@@ -141,15 +141,20 @@ const EquationRenderWorker = () => {
 
         ctx.beginPath();
         let isMoved = false;
+        let diff = 0;
         for(let x = -dw; x <= dw; x++) {
             const posX = (x + 1) / zoom + currentX;
-            let posY = (equation.calc(posX) + currentY) * zoom;
-            let limitPosY = (equation.calc(posY + Math.min(1e-6, 1 / zoom)) + currentY) * zoom;
-            if(isNaN(limitPosY) || isNaN(posY) || Math.abs(limitPosY - posY) > Math.max(.3, 1 / zoom)) {
+            let posY = equation.calc(posX) + currentY;
+            let leftLimitPosY = equation.calc(posX - Math.min(.1 / zoom)) + currentY;
+            let rightLimitPosY = equation.calc(posX + Math.min(.1 / zoom)) + currentY;
+            diff += Math.abs(rightLimitPosY - leftLimitPosY) * .6;
+            // && Math.round(rightLimitPosY) != Math.round(leftLimitPosY)
+            if (isNaN(rightLimitPosY) || isNaN(posY) || Math.round(rightLimitPosY) != Math.round(leftLimitPosY) && Math.abs(rightLimitPosY - leftLimitPosY) > Math.max(.3, 1 / zoom)) {
+                diff = 0;
                 isMoved = false;
                 continue;
             }
-            posY = clamp(posY, -dh - 1, dh + 1);
+            posY = clamp(posY * zoom, -dh - 1, dh + 1);
 
             if(!isMoved) {
                 isMoved = true;
