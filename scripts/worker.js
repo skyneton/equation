@@ -142,10 +142,10 @@ const EquationRenderWorker = () => {
         ctx.beginPath();
         let isMoved = false;
         for(let x = -dw; x <= dw; x++) {
-            const posX = x / zoom + currentX;
+            const posX = (x + 1) / zoom + currentX;
             let posY = (equation.calc(posX) + currentY) * zoom;
-            // let posY = (Math.tan(posX) + currentY) * zoom;
-            if(isNaN(posY)) {
+            let limitPosY = (equation.calc(posY + Math.min(1e-6, 1 / zoom)) + currentY) * zoom;
+            if(isNaN(limitPosY) || isNaN(posY) || Math.abs(limitPosY - posY) > Math.max(.3, 1 / zoom)) {
                 isMoved = false;
                 continue;
             }

@@ -39,7 +39,7 @@ const Integration = new class {
         sendCanvasInfo();
 
         canvas.addEventListener("wheel", e => {
-            zoom = this.#clamp(zoom + e.wheelDelta / 120 * zoom * .08, 1e-10, 1e+10);
+            zoom = this.#clamp(zoom + e.wheelDelta / 120 * zoom * .08, 1e-10, 1e+7);
             sendCanvasInfo();
         });
 
